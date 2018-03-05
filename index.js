@@ -97,6 +97,11 @@ app.get('/', function (req, res) {
   setTimeout(() => res.end('Hello world!'), Math.random() * 500);
 })
 
+app.post('/', function (req, res) {
+    console.log(req.body)
+    res.send("ok")
+})
+
 app.get('/times', function (req, res) {
   influx.query(`
     select * from response_times
