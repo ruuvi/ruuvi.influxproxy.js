@@ -1,0 +1,30 @@
+{
+  "name": "ruuvi.influxproxy.js",
+  "version": "0.1.0",
+  "description": "NodeJS server for receiving data payloads from RuuviTags via gateways, RuuviStation etc and publishing data to InfluxDB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruuvi/ruuvi.influxproxy.js.git"
+  },
+  "keywords": [
+    "Ruuvi",
+    "InfluxDB",
+    "Grafana"
+  ],
+  "author": "Otso Jousimaa",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/ruuvi/ruuvi.influxproxy.js/issues"
+  },
+  "homepage": "https://github.com/ruuvi/ruuvi.influxproxy.js#readme",
+  "dependencies": {
+    "express": "^4.16.2",
+    "influx": "^5.0.7",
+    "npm": "^5.7.1",
+    "ruuvi.endpoints.js": "^1.0.0"
+  }
+}
