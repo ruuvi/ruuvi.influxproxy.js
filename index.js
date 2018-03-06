@@ -4,7 +4,10 @@ const express = require('express');
 const http = require('http');
 const os = require('os');
 
+const bodyParser = require('body-parser');
+
 const app = express();
+app.use(bodyParser.json());
 
 const ruuvi_database = 'ruuvi_measurements';
 const data_port      = 3001;
@@ -98,8 +101,9 @@ app.get('/', function (req, res) {
 })
 
 app.post('/', function (req, res) {
-    console.log(req.body)
-    res.send("ok")
+    console.log(req.body);
+    console.log("got post");
+    res.send("ok");
 })
 
 app.get('/times', function (req, res) {
