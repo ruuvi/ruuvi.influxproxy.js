@@ -194,6 +194,18 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
     if(Array.isArray(measurements)){
       //console.log(measurements);
       measurements.forEach(function(sample){
+        // print debug data to console TODO log file
+        if(sample.name === "gateway"){
+          console.log(sample.action);
+          continue;
+        }
+
+        //Handle data points from Ruuvi tag broadcast formats
+        if(sample.type && 
+           sample.type === "Unknown" &&
+           sample.rawData &&
+           sample.rawData.includes("FF99040"))
+        {
         let influx_point = {};
         influx_point.fields = {};
         influx_point.tags = {};
@@ -205,6 +217,7 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
         influx_samples.push(influx_point);
         //console.log(influx_point);
         //console.log("Parsed data");
+        }
       });
       console.log(influx_samples);
       influx.writePoints(influx_samples).catch(err => {
