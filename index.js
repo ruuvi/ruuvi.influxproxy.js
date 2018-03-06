@@ -150,17 +150,28 @@ app.post('/ruuvistation', jsonParser, function (req, res) {
     //Just kidding, simply store RSSI for now
     let measurements = req.body;
     let influx_samples = [];
+
     // IF ruuvi station data
-    if(measurements.tags){
+    if(measurements.tags && Array.isArray(measurements.tags)){
+      //console.log(measurements);
       measurements.tags.forEach(function(sample){
         let influx_point = {};
-        influx_point.rssi = sample.rssi;
-        influx_point.mac = sample.id;
+        influx_point.fields = {};
+        influx_point.tags = {};
+        influx_point.measurement = ruuvi_measurement;
+        influx_point.fields.rssi = sample.rssi;
+        // format D6A911ADA763 into D6:A9:11:AD:A7:63
+        influx_point.tags.mac = sample.id;
+        influx_point.tags.gateway_id = measurements.deviceId;
         influx_samples.push(influx_point);
+
+        //console.log(influx_point);
+        //console.log("Parsed data");
       });
       console.log(influx_samples);
-      // TODO: Store to influx
-    }
+      influx.writePoints(influx_samples).catch(err => {
+              console.error(`Error saving data to InfluxDB! ${err.stack}`)});
+    }else console.log("not an array");
 
     res.send("ok");
   });
@@ -190,6 +201,7 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
         influx_point.fields.rssi = sample.rssi;
         // format D6A911ADA763 into D6:A9:11:AD:A7:63
         influx_point.tags.mac = sample.mac.match(/.{2}/g).join(":");
+        influx_point.tags.gateway_id = "Ruuvi GW";
         influx_samples.push(influx_point);
         //console.log(influx_point);
         //console.log("Parsed data");
@@ -197,7 +209,6 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
       console.log(influx_samples);
       influx.writePoints(influx_samples).catch(err => {
               console.error(`Error saving data to InfluxDB! ${err.stack}`)});
-      // TODO: Store to influx
     }else console.log("not an array");
 
     res.send("ok");
