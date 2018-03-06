@@ -15,9 +15,10 @@ const aa = require('express-async-await');
 const app = aa(express());
 
 const ruuvi_database = 'ruuvi';
+const ruuvi_measurement = 'ruuvi_measurements';
 const ruuvi_schema   = [
 {
-  measurement: 'ruuvi_measurements',
+  measurement: ruuvi_measurement,
   // TODO time
   fields: {
     rssi: Influx.FieldType.INTEGER
@@ -139,6 +140,7 @@ const influx = new Influx.InfluxDB({
 //
 //
 
+
 app.post('/ruuvistation', jsonParser, function (req, res) {
   console.log(req.body);
     // get all elements
@@ -182,14 +184,19 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
       //console.log(measurements);
       measurements.forEach(function(sample){
         let influx_point = {};
-        influx_point.rssi = sample.rssi;
+        influx_point.fields = {};
+        influx_point.tags = {};
+        influx_point.measurement = ruuvi_measurement;
+        influx_point.fields.rssi = sample.rssi;
         // format D6A911ADA763 into D6:A9:11:AD:A7:63
-        influx_point.mac = sample.mac.match(/.{2}/g).join(":");
+        influx_point.tags.mac = sample.mac.match(/.{2}/g).join(":");
         influx_samples.push(influx_point);
         //console.log(influx_point);
         //console.log("Parsed data");
       });
       console.log(influx_samples);
+      influx.writePoints(influx_samples).catch(err => {
+              console.error(`Error saving data to InfluxDB! ${err.stack}`)});
       // TODO: Store to influx
     }else console.log("not an array");
 
