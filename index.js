@@ -197,7 +197,8 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
         // print debug data to console TODO log file
         if(sample.name === "gateway"){
           console.log(sample.action);
-          continue;
+          //For each is a function call, "continue"
+          return;
         }
 
         //Handle data points from Ruuvi tag broadcast formats
