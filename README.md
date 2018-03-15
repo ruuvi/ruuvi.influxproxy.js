@@ -21,3 +21,8 @@ NOT starting on installation, please execute the following statements to configu
 ```
 node index.js
 ```
+
+# Testing
+
+Run server locally and CURL test data to your server. 
+`curl -X POST -H "Content-Type: application/json"  @ruuvi.influxproxy.js/testdata_gateway.json localhost:3001/gateway`
