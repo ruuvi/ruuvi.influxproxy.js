@@ -109,10 +109,6 @@ const influx = new Influx.InfluxDB({
           return next();
         })
 
-        app.get('/', function (req, res) {
-          setTimeout(() => res.end('Hello world!'), Math.random() * 500);
-        })
-
 // { deviceId: 'laurin-s8',
 //   eventId: '591db9bc-32f0-4059-86e0-8e6cc808492c',
 //   tags: 
@@ -153,46 +149,57 @@ app.post('/ruuvistation', jsonParser, function (req, res) {
 
     // IF ruuvi station data
     if(measurements.tags && Array.isArray(measurements.tags)){
-      //console.log(measurements);
       measurements.tags.forEach(function(sample){
         let influx_point = {};
         influx_point.fields = {};
         influx_point.tags = {};
         influx_point.measurement = ruuvi_measurement;
         influx_point.fields.rssi = sample.rssi;
-        // format D6A911ADA763 into D6:A9:11:AD:A7:63
         influx_point.tags.mac = sample.id;
         influx_point.tags.gateway_id = measurements.deviceId;
         influx_samples.push(influx_point);
-
-        //console.log(influx_point);
-        //console.log("Parsed data");
       });
       console.log(influx_samples);
       influx.writePoints(influx_samples).catch(err => {
-              console.error(`Error saving data to InfluxDB! ${err.stack}`)});
+        console.error(`Error saving data to InfluxDB! ${err.stack}`)});
     }else console.log("not an array");
 
     res.send("ok");
   });
 
-app.post('/gateway', gwjsonParser, async function (req, res) {
-    // get all elements
-    // for each element parse data
-    // Write elements to influx
+ // [ { timestamp: '2017-12-28T12:33:38Z',
+ //    type: 'Unknown',
+ //    mac: 'D6A911ADA763',
+ //    bleName: '',
+ //    rssi: -29,
+ //    rawData: '02010415FF990403401713B9CC001CFFF804080BC50000000000' },
+ //  { timestamp: '2017-12-28T12:33:38Z',
+ //    type: 'Unknown',
+ //    mac: 'D6A911ADA763',
+ //    bleName: '',
+ //    rssi: -39,
+ //    rawData: '02010415FF990403401713B9CC001CFFF804080BC50000000000' },
+ //  { timestamp: '2017-12-28T12:33:40Z',
+ //    type: 'Unknown',
+ //    mac: 'D6A911ADA763',
+ //    bleName: '',
+ //    rssi: -40,
+ //    rawData: '02010415FF990403401712B9CB0020FFFC04000BC50000000000' } ]
 
-    //Just kidding, simply store RSSI for now
-    //console.log(req.body);
-    let str = req.body;
-    let measurements = await dJSON.parse(str);
-    //console.log(measurements);
-    //console.log("parsing gw data");
+ app.post('/gateway', gwjsonParser, async function (req, res) {
+  let str = req.body;
+  if(!str) 
+  { 
+    res.send("invalid");
+    return;
+  }
+  let measurements = await dJSON.parse(str);
+  let ms = Date.now(); //nanoseconds
+  console.log(ms);
 
-    let influx_samples = [];
     // IF GW data
-
     if(Array.isArray(measurements)){
-      //console.log(measurements);
+      let influx_samples = [];
       measurements.forEach(function(sample){
         // print debug data to console TODO log file
         if(sample.name === "gateway"){
@@ -202,41 +209,30 @@ app.post('/gateway', gwjsonParser, async function (req, res) {
         }
 
         //Handle data points from Ruuvi tag broadcast formats
-        if(sample.type && 
-           sample.type === "Unknown" &&
-           sample.rawData &&
-           sample.rawData.includes("FF99040"))
+        if(sample.type &&
+         sample.type === "Unknown" &&
+         sample.rawData &&
+         sample.rawData.includes("FF99040"))
         {
-        let influx_point = {};
-        influx_point.fields = {};
-        influx_point.tags = {};
-        influx_point.measurement = ruuvi_measurement;
-        influx_point.fields.rssi = sample.rssi;
+          let influx_point = {};
+          influx_point.fields = {};
+          influx_point.tags = {};
+          influx_point.measurement = ruuvi_measurement;
+          influx_point.fields.rssi = sample.rssi;
         // format D6A911ADA763 into D6:A9:11:AD:A7:63
         influx_point.tags.mac = sample.mac.match(/.{2}/g).join(":");
         influx_point.tags.gateway_id = "Ruuvi GW";
+        //Influx allows only one measurement per nanosecond with same tags
+        let timestamp = Influx.toNanoDate(ms*1000000);
+        influx_point.timestamp = timestamp.getNanoTime();
+        ms += 1;
         influx_samples.push(influx_point);
-        //console.log(influx_point);
-        //console.log("Parsed data");
-        }
-      });
+      }
+    });
       console.log(influx_samples);
       influx.writePoints(influx_samples).catch(err => {
-              console.error(`Error saving data to InfluxDB! ${err.stack}`)});
+        console.error(`Error saving data to InfluxDB! ${err.stack}`)});
     }else console.log("not an array");
 
     res.send("ok");
-  });
-
-app.get('/times', function (req, res) {
-  influx.query(`
-    select * from response_times
-    where host = ${Influx.escape.stringLit(os.hostname())}
-    order by time desc
-    limit 10
-    `).then(result => {
-      res.json(result);
-    }).catch(err => {
-      res.status(500).send(err.stack);
-    })
   });
