@@ -101,7 +101,7 @@ app.use((req, res, next) => {
 
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`Request to ${req.path} took ${duration}ms`);
+    // console.log(`Request to ${req.path} took ${duration}ms`);
 
     influx.writePoints([{
       measurement: 'response_times',
@@ -139,7 +139,7 @@ app.use((req, res, next) => {
 //   time: 'Mar 6, 2018 11:21:46' }
 
 app.post('/ruuvistation', jsonParser, function(req, res) {
-  console.log(req.body);
+  // console.log(req.body);
   // get all elements
   // for each element parse data
   // Write elements to influx
@@ -183,14 +183,14 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
         influx_point.fields.batteryVoltage = data.battery;
       }
       if (data.batteryVoltage) {
-        influx_point.fields.batteryVoltage = data.batteryVoltage;
+          influx_point.fields.batteryVoltage = Math.round(data.batteryVoltage * 1000.0);
       }
 
 
 
       influx_samples.push(influx_point);
     });
-    console.log(influx_samples);
+    // console.log(influx_samples);
     influx.writePoints(influx_samples).catch(err => {
       console.error(`Error saving data to InfluxDB! ${err.stack}`)
     });
@@ -271,7 +271,7 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
           influx_point.fields.batteryVoltage = data.battery;
         }
         if (data.batteryVoltage) {
-          influx_point.fields.batteryVoltage = data.batteryVoltage;
+          influx_point.fields.batteryVoltage = Math.round(data.batteryVoltage * 1000.0);
         }
         //Influx allows only one measurement per nanosecond with same tags
         let timestamp = Influx.toNanoDate(ms * 1000000);
@@ -280,7 +280,7 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
         influx_samples.push(influx_point);
       }
     });
-    console.log(influx_samples);
+    // console.log(influx_samples);
     influx.writePoints(influx_samples).catch(err => {
       console.error(`Error saving data to InfluxDB! ${err.stack}`)
     });
