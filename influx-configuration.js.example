@@ -1,0 +1,6 @@
+module.exports = {
+  ruuvi_database: 'ruuvi',
+  ruuvi_measurement: 'ruuvi_measurements',
+  data_port: 3001,
+  influx_host: playground.ruuvi.com
+}
