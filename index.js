@@ -220,7 +220,7 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
 
 app.post('/gateway', gwjsonParser, async function(req, res) {
   let str = req.body;
-  console.log(str);
+  // console.log(str);
   if (!str) {
     res.send("invalid");
     return;
