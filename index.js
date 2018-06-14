@@ -172,13 +172,20 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
       influx_point.fields.temperature = data.temperature;
       influx_point.fields.humidity = data.humidity;
       influx_point.fields.pressure = data.pressure;
-      influx_point.fields.accelerationX = data.accelerationX;
-      influx_point.fields.accelerationY = data.accelerationY;
-      influx_point.fields.accelerationZ = data.accelerationZ;
       influx_point.fields.txPower = data.txPower;
       influx_point.fields.movementCounter = data.movementCounter;
       influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
       influx_point.tags.dataFormat = data.destination_endpoint;
+      // Workaround ruuvi.endpoints.js scaling differences
+      if (3 == data.destination_endpoint) {
+        influx_point.fields.accelerationX = data.accelerationX / 1000.0;
+        influx_point.fields.accelerationY = data.accelerationY / 1000.0;
+        influx_point.fields.accelerationZ = data.accelerationZ / 1000.0;
+      } else if (5 == data.destination_endpoint) {
+        influx_point.fields.accelerationX = data.accelerationX;
+        influx_point.fields.accelerationY = data.accelerationY;
+        influx_point.fields.accelerationZ = data.accelerationZ;
+      }
       if (data.battery) {
         influx_point.fields.batteryVoltage = data.battery / 1000.0;
       }
@@ -266,13 +273,20 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
         influx_point.fields.temperature = data.temperature;
         influx_point.fields.humidity = data.humidity;
         influx_point.fields.pressure = data.pressure;
-        influx_point.fields.accelerationX = data.accelerationX;
-        influx_point.fields.accelerationY = data.accelerationY;
-        influx_point.fields.accelerationZ = data.accelerationZ;
         influx_point.fields.txPower = data.txPower;
         influx_point.fields.movementCounter = data.movementCounter;
         influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
         influx_point.tags.dataFormat = data.destination_endpoint;
+        // Workaround ruuvi.endpoints.js scaling differences
+        if (3 == data.destination_endpoint) {
+          influx_point.fields.accelerationX = data.accelerationX / 1000.0;
+          influx_point.fields.accelerationY = data.accelerationY / 1000.0;
+          influx_point.fields.accelerationZ = data.accelerationZ / 1000.0;
+        } else if (5 == data.destination_endpoint) {
+          influx_point.fields.accelerationX = data.accelerationX;
+          influx_point.fields.accelerationY = data.accelerationY;
+          influx_point.fields.accelerationZ = data.accelerationZ;
+        }
         if (data.battery) {
           influx_point.fields.batteryVoltage = data.battery / 1000.0;
         }
