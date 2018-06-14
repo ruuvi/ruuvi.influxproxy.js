@@ -19,10 +19,10 @@ const app = aa(express());
 
 const config = require('./influx-configuration.js')
 
-const ruuvi_database = config.database 'ruuvi';
-const ruuvi_measurement = config.measurement 'ruuvi_measurements';
-const data_port = config.port3001;
-const influx_host = config.host 'playground.ruuvi.com';
+const ruuvi_database = config.database;
+const ruuvi_measurement = config.measurement;
+const data_port = config.port;
+const influx_host = config.host;
 
 const ruuvi_schema = [{
   measurement: ruuvi_measurement,
