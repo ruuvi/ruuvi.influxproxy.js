@@ -171,19 +171,19 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
       influx_point.tags.gateway_id = measurements.deviceId;
       influx_point.fields.temperature = data.temperature;
       influx_point.fields.humidity = data.humidity;
-      influx_point.fields.pressure: = data.pressure;
+      influx_point.fields.pressure = data.pressure;
       influx_point.fields.accelerationX = data.accelerationX;
       influx_point.fields.accelerationY = data.accelerationY;
       influx_point.fields.accelerationZ = data.accelerationZ;
-      influx_point.fields.txPower: = data.txPower;
-      influx_point.fields.movementCounter: = data.movementCounter;
+      influx_point.fields.txPower = data.txPower;
+      influx_point.fields.movementCounter = data.movementCounter;
       influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
       influx_point.tags.dataFormat = data.destination_endpoint;
       if (data.battery) {
-        influx_point.fields.batteryVoltage: = data.battery;
+        influx_point.fields.batteryVoltage = data.battery;
       }
       if (data.batteryVoltage) {
-        influx_point.fields.batteryVoltage: = data.batteryVoltage;
+        influx_point.fields.batteryVoltage = data.batteryVoltage;
       }
 
 
@@ -259,19 +259,19 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
         influx_point.tags.gateway_id = gateway_id;
         influx_point.fields.temperature = data.temperature;
         influx_point.fields.humidity = data.humidity;
-        influx_point.fields.pressure: = data.pressure;
+        influx_point.fields.pressure = data.pressure;
         influx_point.fields.accelerationX = data.accelerationX;
         influx_point.fields.accelerationY = data.accelerationY;
         influx_point.fields.accelerationZ = data.accelerationZ;
-        influx_point.fields.txPower: = data.txPower;
-        influx_point.fields.movementCounter: = data.movementCounter;
+        influx_point.fields.txPower = data.txPower;
+        influx_point.fields.movementCounter = data.movementCounter;
         influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
         influx_point.tags.dataFormat = data.destination_endpoint;
         if (data.battery) {
-          influx_point.fields.batteryVoltage: = data.battery;
+          influx_point.fields.batteryVoltage = data.battery;
         }
         if (data.batteryVoltage) {
-          influx_point.fields.batteryVoltage: = data.batteryVoltage;
+          influx_point.fields.batteryVoltage = data.batteryVoltage;
         }
         //Influx allows only one measurement per nanosecond with same tags
         let timestamp = Influx.toNanoDate(ms * 1000000);
