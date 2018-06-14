@@ -30,11 +30,11 @@ const ruuvi_schema = [{
     rssi: Influx.FieldType.INTEGER,
     temperature: Influx.FieldType.FLOAT,
     humidity: Influx.FieldType.FLOAT,
-    pressure: Influx.FieldType.INTEGER,
+    pressure: Influx.FieldType.FLOAT,
     accelerationX: Influx.FieldType.FLOAT,
     accelerationY: Influx.FieldType.FLOAT,
     accelerationZ: Influx.FieldType.FLOAT,
-    batteryVoltage: Influx.FieldType.INTEGER,
+    batteryVoltage: Influx.FieldType.FLOAT,
     txPower: Influx.FieldType.INTEGER,
     movementCounter: Influx.FieldType.INTEGER,
     measurementSequenceNumber: Influx.FieldType.INTEGER
@@ -180,10 +180,10 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
       influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
       influx_point.tags.dataFormat = data.destination_endpoint;
       if (data.battery) {
-        influx_point.fields.batteryVoltage = data.battery;
+        influx_point.fields.batteryVoltage = data.battery / 1000.0;
       }
       if (data.batteryVoltage) {
-          influx_point.fields.batteryVoltage = Math.round(data.batteryVoltage * 1000.0);
+        influx_point.fields.batteryVoltage = data.batteryVoltage;
       }
 
 
@@ -220,6 +220,7 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
 
 app.post('/gateway', gwjsonParser, async function(req, res) {
   let str = req.body;
+  console.log(str);
   if (!str) {
     res.send("invalid");
     return;
@@ -255,7 +256,12 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
         influx_point.fields.rssi = sample.rssi;
         // format D6A911ADA763 into D6:A9:11:AD:A7:63
         influx_point.tags.mac = sample.mac.match(/.{2}/g).join(":");
-        let data = ruuviParser.parse(Buffer.from(sample.dataPayload.substring(4), 'hex'));
+        let binary = hexStringToByte(sample.rawData.slice(sample.rawData.indexOf("FF99040") + 6));
+        // Skip non-broadcast types
+        if (binary[0] < 2 || binary[0] > 5) {
+          return;
+        }
+        let data = ruuviParser.parse(binary);
         influx_point.tags.gateway_id = gateway_id;
         influx_point.fields.temperature = data.temperature;
         influx_point.fields.humidity = data.humidity;
@@ -268,10 +274,10 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
         influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
         influx_point.tags.dataFormat = data.destination_endpoint;
         if (data.battery) {
-          influx_point.fields.batteryVoltage = data.battery;
+          influx_point.fields.batteryVoltage = data.battery / 1000.0;
         }
         if (data.batteryVoltage) {
-          influx_point.fields.batteryVoltage = Math.round(data.batteryVoltage * 1000.0);
+          influx_point.fields.batteryVoltage = data.batteryVoltage;
         }
         //Influx allows only one measurement per nanosecond with same tags
         let timestamp = Influx.toNanoDate(ms * 1000000);
@@ -288,3 +294,19 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
 
   res.send("ok");
 });
+
+/*
+ * Heartbeat scans
+ */
+app.get('/monitor', jsonParser, async function(req, res) {
+  res.send("I'm up :)");
+});
+
+process
+  .on('unhandledRejection', (reason, p) => {
+    console.error(reason, 'Unhandled Rejection at Promise', p);
+  })
+  .on('uncaughtException', err => {
+    console.error(err, 'Uncaught Exception thrown');
+    // process.exit(1);
+  });
