@@ -1,5 +1,5 @@
 # ruuvi.influxproxy.js
-NodeJS server for receiving data payloads from RuuviTags via gateways, RuuviStation etc and publishing data to InfluxDB
+NodeJS server for receiving data payloads from RuuviTags via gateways, RuuviStation etc and publishing data to InfluxDB. This repository is for internal use, and no support is offered. 
 
 # Installing
 
