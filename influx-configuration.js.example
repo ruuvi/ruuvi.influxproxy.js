@@ -2,5 +2,8 @@ module.exports = {
   database: 'ruuvi',
   measurement: 'ruuvi_measurements',
   port: 3001,
-  host: 'playground.ruuvi.com'
+  host: 'playground.ruuvi.com',
+  influxUser: '',
+  influxPassword: '',
+  mqttBroker: 'playground.ruuvi.com'
 }

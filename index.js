@@ -3,6 +3,7 @@ const Influx = require('influx');
 const express = require('express');
 const http = require('http');
 const os = require('os');
+const mqtt = require ('mqtt');
 
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
@@ -49,7 +50,9 @@ const ruuvi_schema = [{
 const influx = new Influx.InfluxDB({
   host: influx_host,
   database: ruuvi_database,
-  schema: ruuvi_schema
+  schema: ruuvi_schema,
+  username: config.influxUser,
+  password: config.influxPassword
 });
 
 // https://gist.github.com/tauzen/3d18825ae41ff3fc8981
@@ -117,7 +120,49 @@ app.use((req, res, next) => {
     })
   })
   return next();
-})
+});
+
+const ruuviHexStringToInflux = function(hexstring)
+{
+  //console.log(hexstring);
+  let binary = hexStringToByte(hexstring);
+  // console.log(byteToHexString(binary));
+  // Skip non-broadcast types
+      if (binary[0] < 2 || binary[0] > 5 || binary.size < 10) {
+        return null;
+      }
+      //console.log(hexstring);
+
+      let data = ruuviParser.parse(binary);
+      let influx_point = {};
+      influx_point.fields = {};
+      influx_point.tags = {};
+      influx_point.measurement = ruuvi_measurement;
+      influx_point.fields.temperature = data.temperature;
+      influx_point.fields.humidity = data.humidity;
+      influx_point.fields.pressure = data.pressure;
+      influx_point.fields.txPower = data.txPower;
+      influx_point.fields.movementCounter = data.movementCounter;
+      influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
+      influx_point.tags.dataFormat = data.destination_endpoint;
+      // Workaround ruuvi.endpoints.js scaling differences
+      if (3 == data.destination_endpoint) {
+        influx_point.fields.accelerationX = data.accelerationX / 1000.0;
+        influx_point.fields.accelerationY = data.accelerationY / 1000.0;
+        influx_point.fields.accelerationZ = data.accelerationZ / 1000.0;
+      } else if (5 == data.destination_endpoint) {
+        influx_point.fields.accelerationX = data.accelerationX;
+        influx_point.fields.accelerationY = data.accelerationY;
+        influx_point.fields.accelerationZ = data.accelerationZ;
+      }
+      if (data.battery) {
+        influx_point.fields.batteryVoltage = data.battery / 1000.0;
+      }
+      if (data.batteryVoltage) {
+        influx_point.fields.batteryVoltage = data.batteryVoltage;
+      }
+    return influx_point;
+}
 
 // { deviceId: 'laurin-s8',
 //   eventId: '591db9bc-32f0-4059-86e0-8e6cc808492c',
@@ -154,47 +199,11 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
       if (!hex_data.includes("FF99040")) {
         return;
       }
-      let binary = hexStringToByte(hex_data.slice(hex_data.indexOf("FF99040") + 6));
-      // console.log(byteToHexString(binary));
-      // Skip non-broadcast types
-      if (binary[0] < 2 || binary[0] > 5 || binary.size < 10) {
-        return;
-      }
 
-      let data = ruuviParser.parse(binary);
-      let influx_point = {};
-      influx_point.fields = {};
-      influx_point.tags = {};
-      influx_point.measurement = ruuvi_measurement;
+      let influx_point = ruuviHexStringToInflux(hex_data.slice(hex_data.indexOf("FF99040") + 6));
       influx_point.fields.rssi = sample.rssi;
       influx_point.tags.mac = sample.id;
       influx_point.tags.gateway_id = measurements.deviceId;
-      influx_point.fields.temperature = data.temperature;
-      influx_point.fields.humidity = data.humidity;
-      influx_point.fields.pressure = data.pressure;
-      influx_point.fields.txPower = data.txPower;
-      influx_point.fields.movementCounter = data.movementCounter;
-      influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
-      influx_point.tags.dataFormat = data.destination_endpoint;
-      // Workaround ruuvi.endpoints.js scaling differences
-      if (3 == data.destination_endpoint) {
-        influx_point.fields.accelerationX = data.accelerationX / 1000.0;
-        influx_point.fields.accelerationY = data.accelerationY / 1000.0;
-        influx_point.fields.accelerationZ = data.accelerationZ / 1000.0;
-      } else if (5 == data.destination_endpoint) {
-        influx_point.fields.accelerationX = data.accelerationX;
-        influx_point.fields.accelerationY = data.accelerationY;
-        influx_point.fields.accelerationZ = data.accelerationZ;
-      }
-      if (data.battery) {
-        influx_point.fields.batteryVoltage = data.battery / 1000.0;
-      }
-      if (data.batteryVoltage) {
-        influx_point.fields.batteryVoltage = data.batteryVoltage;
-      }
-
-
-
       influx_samples.push(influx_point);
     });
     // console.log(influx_samples);
@@ -255,44 +264,15 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
       if (sample.type &&
         sample.type === "Unknown" &&
         sample.rawData &&
-        sample.rawData.includes("FF99040")) {
-        let influx_point = {};
-        influx_point.fields = {};
-        influx_point.tags = {};
-        influx_point.measurement = ruuvi_measurement;
+        sample.rawData.includes("FF99040")) 
+      {
+        let influx_point = ruuviHexStringToInflux(sample.rawData.slice(sample.rawData.indexOf("FF99040") + 6));
+        
         influx_point.fields.rssi = sample.rssi;
         // format D6A911ADA763 into D6:A9:11:AD:A7:63
         influx_point.tags.mac = sample.mac.match(/.{2}/g).join(":");
-        let binary = hexStringToByte(sample.rawData.slice(sample.rawData.indexOf("FF99040") + 6));
-        // Skip non-broadcast types
-        if (binary[0] < 2 || binary[0] > 5) {
-          return;
-        }
-        let data = ruuviParser.parse(binary);
-        influx_point.tags.gateway_id = gateway_id;
-        influx_point.fields.temperature = data.temperature;
-        influx_point.fields.humidity = data.humidity;
-        influx_point.fields.pressure = data.pressure;
-        influx_point.fields.txPower = data.txPower;
-        influx_point.fields.movementCounter = data.movementCounter;
-        influx_point.fields.measurementSequenceNumber = data.measurementSequenceNumber;
-        influx_point.tags.dataFormat = data.destination_endpoint;
-        // Workaround ruuvi.endpoints.js scaling differences
-        if (3 == data.destination_endpoint) {
-          influx_point.fields.accelerationX = data.accelerationX / 1000.0;
-          influx_point.fields.accelerationY = data.accelerationY / 1000.0;
-          influx_point.fields.accelerationZ = data.accelerationZ / 1000.0;
-        } else if (5 == data.destination_endpoint) {
-          influx_point.fields.accelerationX = data.accelerationX;
-          influx_point.fields.accelerationY = data.accelerationY;
-          influx_point.fields.accelerationZ = data.accelerationZ;
-        }
-        if (data.battery) {
-          influx_point.fields.batteryVoltage = data.battery / 1000.0;
-        }
-        if (data.batteryVoltage) {
-          influx_point.fields.batteryVoltage = data.batteryVoltage;
-        }
+        influx_point.tags.gateway_id = measurements.deviceId;
+        influx_samples.push(influx_point);
         //Influx allows only one measurement per nanosecond with same tags
         let timestamp = Influx.toNanoDate(ms * 1000000);
         influx_point.timestamp = timestamp.getNanoTime();
@@ -314,6 +294,69 @@ app.post('/gateway', gwjsonParser, async function(req, res) {
  */
 app.get('/monitor', jsonParser, async function(req, res) {
   res.send("I'm up :)");
+});
+
+/*
+ * MQTT connection
+ */
+const mqttClient = mqtt.connect('mqtt://' + config.mqttBroker);
+
+mqttClient.on('connect', function () {
+  console.log("MQTT connected");
+  mqttClient.subscribe('+/RuuviTag/+/RAW', function (err) {
+    if (err) {
+      console.log("err");
+    }
+  })
+});
+ 
+mqttClient.on('message', function (topic, message) {
+
+  const topic_tokens = topic.split("/");
+
+  if(topic_tokens.length < 4) 
+  {
+    return;
+  }
+
+  const gateway = topic_tokens[0];
+
+  if("RuuviTag" == topic_tokens[1])
+  {
+    let influx_samples = [];
+    const mac = topic_tokens[2];
+
+    if("RAW" == topic_tokens[3])
+    {
+      // message is Buffer
+      const strpayload = message.toString().split(":");
+
+      if(strpayload.length < 2)
+      {
+          return;
+      }
+
+      const timestamp = strpayload[0];
+      const hexpayload = strpayload[1];
+      console.log(topic + ':' + message.toString());
+      let influx_point = ruuviHexStringToInflux(hexpayload);
+
+      if(null == influx_point)
+      {
+        return;
+      }
+
+      influx_point.tags.gateway_id = gateway;
+      influx_point.tags.mac = mac;
+      influx_point.timestamp = Influx.toNanoDate(timestamp * 1000000000).getNanoTime();
+      influx_samples.push(influx_point);
+
+      // console.log(influx_samples);
+      influx.writePoints(influx_samples).catch(err => {
+        console.error(`Error saving data to InfluxDB! ${err.stack}`)
+      });
+    }
+  }
 });
 
 process
