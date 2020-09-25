@@ -28,4 +28,4 @@ node index.js
 # Testing
 
 Run server locally and CURL test data to your server. 
-`curl -X POST -H "Content-Type: application/json"  --data "@./testdata_gateway.on" localhost:3001/gateway?gateway_id=curl_test`
+`curl -X POST -H "Content-Type: application/json"  --data "@./ruuvigw_sample.json" localhost:3001/gateway`

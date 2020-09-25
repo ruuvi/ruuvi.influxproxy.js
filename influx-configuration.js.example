@@ -5,5 +5,4 @@ module.exports = {
   host: 'playground.ruuvi.com',
   influxUser: '',
   influxPassword: '',
-  mqttBroker: 'playground.ruuvi.com'
 }
