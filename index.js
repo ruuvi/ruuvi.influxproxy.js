@@ -206,13 +206,11 @@ app.post('/gateway', jsonParser, async function(req, res) {
         //Handle data points from Ruuvi tag broadcast formats
         if (data &&
             data.includes("FF99040")) {
-            console.log(sample);
             let influx_point = ruuviHexStringToInflux(data.slice(data.indexOf("FF99040") + 6));
 
             influx_point.fields.rssi = sample.rssi;
-            // format D6A911ADA763 into D6:A9:11:AD:A7:63
-            influx_point.tags.mac = key.match(/.{2}/g).join(":");
-            influx_point.tags.gateway_id = post.gwmac;
+            influx_point.tags.mac = key;
+            influx_point.tags.gateway_id = post.data.gwmac;
             influx_samples.push(influx_point);
             //Influx allows only one measurement per nanosecond with same tags
             let timestamp = Influx.toNanoDate((ms * 1000000).toString());
@@ -221,6 +219,7 @@ app.post('/gateway', jsonParser, async function(req, res) {
             influx_samples.push(influx_point);
         }
     });
+    console.log(influx_samples)
     influx.writePoints(influx_samples).catch(err => {
         console.error(`Error saving data to InfluxDB! ${err.stack}`)
     });
