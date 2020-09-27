@@ -214,7 +214,8 @@ app.post('/gateway', jsonParser, async function(req, res) {
 
             influx_point.fields.rssi = sample.rssi;
             influx_point.tags.mac = key;
-            influx_point.tags.gateway_id = post.data.gwmac;
+            influx_point.tags.gateway_id = post.data.gw_mac;
+            //console.log(post.data);
             influx_samples.push(influx_point);
             //Influx allows only one measurement per nanosecond with same tags
             let timestamp = Influx.toNanoDate((ms * 1000000).toString());
@@ -223,7 +224,7 @@ app.post('/gateway', jsonParser, async function(req, res) {
             influx_samples.push(influx_point);
         }
     });
-    console.log(influx_samples)
+    //console.log(influx_samples)
     influx.writePoints(influx_samples).catch(err => {
         console.error(`Error saving data to InfluxDB! ${err.stack}`)
     });
