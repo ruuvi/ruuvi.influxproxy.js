@@ -167,12 +167,16 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
     if (measurements.tags && Array.isArray(measurements.tags)) {
         measurements.tags.forEach(function(sample) {
             //If not ruuvi broadcast data, continue to next sample
-            let hex_data = byteToHexString(sample.rawDataBlob.blob);
+            /*let hex_data = byteToHexString(sample.rawDataBlob.blob);
             if (!hex_data.includes("FF99040")) {
                 return;
-            }
+            }*/
 
-            let influx_point = ruuviHexStringToInflux(hex_data.slice(hex_data.indexOf("FF99040") + 6));
+            //let influx_point = ruuviHexStringToInflux(hex_data.slice(hex_data.indexOf("FF99040") + 6));
+            let influx_point = {};
+            influx_point.fields = {};
+            influx_point.tags = {};
+            influx_point.measurement = ruuvi_measurement;
             influx_point.fields.rssi = sample.rssi;
             influx_point.tags.mac = sample.id;
             influx_point.tags.gateway_id = measurements.deviceId;
@@ -183,7 +187,7 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
             console.error(`Error saving data to InfluxDB! ${err.stack}`)
         });
     } else console.log("not an array");
-
+    // console.log(influx_samples);
     res.send("ok");
 });
 

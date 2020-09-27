@@ -1,0 +1,32 @@
+{
+    "tags": [{
+        "accelX": -0.244,
+        "accelY": 0.32,
+        "accelZ": 0.948,
+        "createDate": "2020-08-18T19:51:59+0300",
+        "dataFormat": 5,
+        "defaultBackground": 5,
+        "favorite": true,
+        "humidity": 52.285,
+        "humidityOffset": 0,
+        "id": "DA:B5:9B:DF:A9:BB",
+        "measurementSequenceNumber": 13,
+        "movementCounter": 0,
+        "name": "Demotagi",
+        "pressure": 101295,
+        "rssi": -53,
+        "temperature": 24.54,
+        "txPower": 4,
+        "updateAt": "2020-09-27T11:53:31+0300",
+        "voltage": 1.895
+    }],
+    "batteryLevel": 95,
+    "deviceId": "otso",
+    "eventId": "dd109dbf-0b3b-492f-be0b-8298a353a9e3",
+    "location": {
+        "accuracy": 20.773,
+        "latitude": 59.4090758,
+        "longitude": 24.6906309
+    },
+    "time": "2020-09-27T11:53:32+0300"
+}
