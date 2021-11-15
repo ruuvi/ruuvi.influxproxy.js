@@ -5,4 +5,5 @@ module.exports = {
   host: 'playground.ruuvi.com',
   influxUser: '',
   influxPassword: '',
+  mqtt_broker: 'mqtt://test.mosquitto.org'
 }

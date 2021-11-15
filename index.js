@@ -4,6 +4,8 @@ const express = require('express');
 const http = require('http');
 const os = require('os');
 
+const mqtt = require('mqtt')
+
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 const ruuviParser = require('ruuvi.endpoints.js');
@@ -11,6 +13,8 @@ const ruuviParser = require('ruuvi.endpoints.js');
 const app = express();
 
 const config = require('./influx-configuration.js')
+
+const client  = mqtt.connect(config.mqtt_broker)
 
 const ruuvi_database = config.database;
 const ruuvi_measurement = config.measurement;
@@ -238,6 +242,54 @@ app.post('/gateway', jsonParser, async function(req, res) {
 app.get('/monitor', jsonParser, async function(req, res) {
     res.send("I'm up :)");
 });
+
+client.on('connect', function () {
+  client.subscribe('#', function (err) {
+    if (!err) {
+      console.log("MQTT Sub ok")
+    }
+    else
+    {
+        console.error(err, 'MQTT problem');
+    }
+  })
+})
+
+client.on('message', function (topic, message) {
+    // message is Buffer
+    //console.log(topic.toString() + " " + message.toString())
+    let post = JSON.parse(message.toString());
+    let influx_samples = [];
+    if (!post.data) {
+      console.log("invalid");
+      return;
+    }
+    let sample = post.data
+    let ms = post.ts * 1000; //seconds, convert to ns for influx
+
+    let data = sample.toUpperCase();
+    let tag_mac = topic.substring(
+    topic.lastIndexOf("/") + 1
+    );
+
+
+     //Handle data points from Ruuvi tag broadcast formats
+     if (data && data.includes("FF99040")) {
+        let influx_point = ruuviHexStringToInflux(data.slice(data.indexOf("FF99040") + 6));
+            influx_point.fields.rssi = post.rssi;
+            influx_point.tags.mac = tag_mac;
+            influx_point.tags.gateway_id = post.gw_mac;
+            //console.log(post.data);
+            //Influx allows only one measurement per nanosecond with same tags
+            let timestamp = Influx.toNanoDate((ms * 1000000).toString());
+            influx_point.timestamp = timestamp.getNanoTime();
+            influx_samples.push(influx_point);
+        }
+    //console.log(influx_samples)
+    influx.writePoints(influx_samples).catch(err => {
+        console.error(`Error saving data to InfluxDB! ${err.stack}`)
+    });
+})
 
 process
     .on('unhandledRejection', (reason, p) => {
