@@ -28,6 +28,7 @@
     "influx": "^5.9.2",
     "mqtt": "^4.2.8",
     "os": "^0.1.2",
-    "ruuvi.endpoints.js": "^1.1.6"
+    "ruuvi.endpoints.js": "^1.1.6",
+    "semistandard": "^16.0.1"
   }
 }

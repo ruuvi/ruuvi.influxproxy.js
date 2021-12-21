@@ -16,6 +16,8 @@ const config = require('./influx-configuration.js')
 
 const client  = mqtt.connect(config.mqtt_broker)
 
+const gateway_database = config.gw_status_db;
+const gateway_status_measurement = "Gateway Status";
 const ruuvi_database = config.database;
 const ruuvi_measurement = config.measurement;
 const data_port = config.port;
@@ -43,12 +45,39 @@ const ruuvi_schema = [{
     ]
 }];
 
+const gateway_schema = [{
+    measurement: gateway_status_measurement,
+    fields: {
+        esp_fw: Influx.FieldType.INTEGER,
+        nrf_fw: Influx.FieldType.INTEGER,
+        uptime: Influx.FieldType.INTEGER,
+        sensors_seen: Influx.FieldType.INTEGER,
+        active_sensors: Influx.FieldType.INTEGER,
+        inactive_sensors: Influx.FieldType.INTEGER,
+        connection: Influx.FieldType.STRING
+    },
+    tags: [
+        'gateway_id'
+    ]
+}];
+
+
+
 const influx = new Influx.InfluxDB({
     host: influx_host,
     database: ruuvi_database,
     schema: ruuvi_schema,
     username: config.influxUser,
     password: config.influxPassword
+});
+
+const gateway_db = new Influx.InfluxDB({
+    host: influx_host,
+    database: gateway_database,
+    schema: gateway_schema,
+    username: config.influxUser,
+    password: config.influxPassword
+
 });
 
 // https://gist.github.com/tauzen/3d18825ae41ff3fc8981
@@ -84,6 +113,9 @@ influx.getDatabaseNames()
     .then(names => {
         if (!names.includes(ruuvi_database)) {
             return influx.createDatabase(ruuvi_database);
+        }
+        if (!names.includes(gateway_database)) {
+            return influx.createDatabase(gateway_database);
         }
     })
     .then(() => {
@@ -193,6 +225,11 @@ app.post('/ruuvistation', jsonParser, function(req, res) {
     } else console.log("not an array");
     // console.log(influx_samples);
     res.send("ok");
+});
+
+app.post('/status', jsonParser, async function(req, res){
+  console.log(req);
+  res.send("ok");
 });
 
 app.post('/gateway', jsonParser, async function(req, res) {
