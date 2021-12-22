@@ -226,7 +226,36 @@ app.post('/ruuvistation', jsonParser, function (req, res) {
 });
 
 app.post('/status', jsonParser, async function (req, res) {
-  console.log(req);
+      const post = req.body;
+      const influx_point = {};
+      influx_point.fields = {};
+      influx_point.tags = {};
+      influx_point.measurement = gateway_status_measurement;
+      influx_point.tags.gw_addr = post.gw_addr;
+      influx_point.fields.esp_fw = post.esp_fw;
+      influx_point.fields.nrf_fw = post.nrf_fw;
+      influx_point.fields.uptime = post.uptime;
+      influx_point.fields.connection = post.connection;
+      influx_point.fields.sensors_seen = post.sensors_seen;
+      influx_point.fields.active_sensors = post.active_sensors;
+      influx_point.fields.inactive_sensors = post.inactive_sensors;
+  res.send('ok');
+});
+
+app.post('/gw_statistics', jsonParser, async function (req, res) {
+      const post = req.body;
+      const influx_point = {};
+      influx_point.fields = {};
+      influx_point.tags = {};
+      influx_point.measurement = gateway_status_measurement;
+      influx_point.tags.gw_addr = post.gw_addr;
+      influx_point.fields.esp_fw = post.esp_fw;
+      influx_point.fields.nrf_fw = post.nrf_fw;
+      influx_point.fields.uptime = post.uptime;
+      influx_point.fields.connection = post.connection;
+      influx_point.fields.sensors_seen = post.sensors_seen;
+      influx_point.fields.active_sensors = post.active_sensors;
+      influx_point.fields.inactive_sensors = post.inactive_sensors;
   res.send('ok');
 });
 
