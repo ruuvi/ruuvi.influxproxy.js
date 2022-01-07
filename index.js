@@ -250,7 +250,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       influx_point.fields = {};
       influx_point.tags = {};
       influx_point.measurement = gateway_status_measurement;
-      influx_point.tags.gw_addr = post.gw_addr;
+      influx_point.tags.gateway_id = post.gw_addr;
       influx_point.fields.esp_fw = post.esp_fw;
       influx_point.fields.nrf_fw = post.nrf_fw;
       influx_point.fields.uptime = post.uptime;
