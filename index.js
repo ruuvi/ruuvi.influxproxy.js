@@ -17,7 +17,7 @@ const config = require('./influx-configuration.js');
 const client = mqtt.connect(config.mqtt_broker);
 
 const gateway_database = config.gw_status_db;
-const gateway_status_measurement = 'Gateway Status';
+const gateway_status_measurement = 'gateway_status';
 const ruuvi_database = config.database;
 const ruuvi_measurement = config.measurement;
 const data_port = config.port;
@@ -57,7 +57,10 @@ const gateway_schema = [{
     connection: Influx.FieldType.STRING
   },
   tags: [
-    'gateway_id'
+    'gateway_id',
+    'esp_version',
+    'nrf_version',
+    'connection'
   ]
 }];
 
@@ -251,6 +254,9 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       influx_point.tags = {};
       influx_point.measurement = gateway_status_measurement;
       influx_point.tags.gateway_id = post.gw_addr;
+      influx_point.tags.connection = post.connection;
+      influx_point.tags.esp_version = post.esp_fw;
+      influx_point.tags.nrf_version = post.nrf_fw;
       influx_point.fields.esp_fw = post.esp_fw;
       influx_point.fields.nrf_fw = post.nrf_fw;
       influx_point.fields.uptime = post.uptime;
