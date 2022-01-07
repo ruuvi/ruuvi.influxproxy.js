@@ -1,0 +1,10 @@
+{
+    "gw_addr": "DD:C3:3B:AB:2F:FC",
+    "esp_fw": 10902,
+    "nrf_fw": 702,
+    "uptime": "21",
+    "connection": "WIFI",
+    "sensors_seen": "19",
+    "active_sensors": 19,
+    "inactive_sensors": 0
+}

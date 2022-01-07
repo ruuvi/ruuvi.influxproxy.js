@@ -239,11 +239,13 @@ app.post('/status', jsonParser, async function (req, res) {
       influx_point.fields.sensors_seen = post.sensors_seen;
       influx_point.fields.active_sensors = post.active_sensors;
       influx_point.fields.inactive_sensors = post.inactive_sensors;
+      influx_samples.push(influx_point);
   res.send('ok');
 });
 
 app.post('/gw_statistics', jsonParser, async function (req, res) {
       const post = req.body;
+      const influx_samples = [];
       const influx_point = {};
       influx_point.fields = {};
       influx_point.tags = {};
@@ -256,6 +258,10 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       influx_point.fields.sensors_seen = post.sensors_seen;
       influx_point.fields.active_sensors = post.active_sensors;
       influx_point.fields.inactive_sensors = post.inactive_sensors;
+      influx_samples.push(influx_point);
+      influx.writePoints(influx_samples).catch(err => {
+      console.error(`Error saving data to InfluxDB! ${err.stack}`);
+    });
   res.send('ok');
 });
 
