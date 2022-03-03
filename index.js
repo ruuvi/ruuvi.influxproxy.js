@@ -54,7 +54,8 @@ const gateway_schema = [{
     sensors_seen: Influx.FieldType.INTEGER,
     active_sensors: Influx.FieldType.INTEGER,
     inactive_sensors: Influx.FieldType.INTEGER,
-    connection: Influx.FieldType.STRING
+    connection: Influx.FieldType.STRING,
+    mac: Influx.FieldType.STRING
   },
   tags: [
     'gateway_id',
@@ -260,6 +261,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       influx_point.fields.esp_fw = post.esp_fw;
       influx_point.fields.nrf_fw = post.nrf_fw;
       influx_point.fields.uptime = post.uptime;
+      influx_point.fields.mac = post.gw_addr;
       influx_point.fields.connection = post.connection;
       influx_point.fields.sensors_seen = post.sensors_seen;
       influx_point.fields.active_sensors = post.active_sensors;
@@ -268,7 +270,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       gateway_db.writePoints(influx_samples).catch(err => {
       console.error(`Error saving data to InfluxDB! ${err.stack}`);
     });
-  res.send('ok');
+    res.send('ok');
 });
 
 app.post('/gateway', jsonParser, async function (req, res) {
