@@ -18,6 +18,7 @@ const client = mqtt.connect(config.mqtt_broker);
 
 const gateway_database = config.gw_status_db;
 const gateway_status_measurement = 'gateway_status';
+const gateway_status_reset = 'gateway_reset';
 const ruuvi_database = config.database;
 const ruuvi_measurement = config.measurement;
 const data_port = config.port;
@@ -305,7 +306,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
         influx_point = {};
         influx_point.fields = {};
         influx_point.tags = {};
-        influx_point.measurement = gateway_status_measurement;
+        influx_point.measurement = gateway_status_reset;
         influx_point.tags.gateway_id = post.gw_addr;
         influx_point.tags.connection = post.connection;
         influx_point.tags.esp_version = post.esp_fw;
