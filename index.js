@@ -300,7 +300,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
       influx_point.fields.active_sensors = post.active_sensors;
       influx_point.fields.inactive_sensors = post.inactive_sensors;
       influx_samples.push(influx_point);
-      if(post.uptime < 1800)
+      if(post.uptime < 1800 && post.reset_reason)
       {
         influx_point = {};
         influx_point.fields = {};
