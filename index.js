@@ -90,6 +90,21 @@ const reset_schema = [{
   ]
 }];
 
+const task_statistics_schema = [
+  {
+    measurement: 'task_statistics',
+    fields: {
+      uptime: Influx.FieldType.INTEGER,
+      task_name: Influx.FieldType.STRING,
+      min_free_stack_size: Influx.FieldType.INTEGER
+    },
+    tags: [
+      'device_address',
+      'esp_fw'
+    ]
+  }
+];
+
 const influx = new Influx.InfluxDB({
   host: influx_host,
   database: ruuvi_database,
@@ -264,71 +279,95 @@ app.post('/ruuvistation', jsonParser, function (req, res) {
 });
 
 app.post('/status', jsonParser, async function (req, res) {
-      const post = req.body;
-      const influx_point = {};
-      influx_point.fields = {};
-      influx_point.tags = {};
-      influx_point.measurement = gateway_status_measurement;
-      influx_point.tags.gw_addr = post.gw_addr;
-      influx_point.fields.esp_fw = post.esp_fw;
-      influx_point.fields.nrf_fw = post.nrf_fw;
-      influx_point.fields.uptime = post.uptime;
-      influx_point.fields.connection = post.connection;
-      influx_point.fields.sensors_seen = post.sensors_seen;
-      influx_point.fields.active_sensors = post.active_sensors;
-      influx_point.fields.inactive_sensors = post.inactive_sensors;
-      //influx_samples.push(influx_point);
+  const post = req.body;
+  const influx_point = {};
+  influx_point.fields = {};
+  influx_point.tags = {};
+  influx_point.measurement = gateway_status_measurement;
+  influx_point.tags.gw_addr = post.gw_addr;
+  influx_point.fields.esp_fw = post.esp_fw;
+  influx_point.fields.nrf_fw = post.nrf_fw;
+  influx_point.fields.uptime = post.uptime;
+  influx_point.fields.connection = post.connection;
+  influx_point.fields.sensors_seen = post.sensors_seen;
+  influx_point.fields.active_sensors = post.active_sensors;
+  influx_point.fields.inactive_sensors = post.inactive_sensors;
+  // influx_samples.push(influx_point);
   res.send('ok');
 });
 
 app.post('/gw_statistics', jsonParser, async function (req, res) {
-      const post = req.body;
-      const influx_samples = [];
-      let influx_point = {};
-      influx_point.fields = {};
-      influx_point.tags = {};
-      influx_point.measurement = gateway_status_measurement;
-      influx_point.tags.gateway_id = post.gw_addr;
-      influx_point.tags.connection = post.connection;
-      influx_point.tags.esp_version = post.esp_fw;
-      influx_point.tags.nrf_version = post.nrf_fw;
-      influx_point.fields.esp_fw = post.esp_fw;
-      influx_point.fields.nrf_fw = post.nrf_fw;
-      influx_point.fields.uptime = post.uptime;
-      influx_point.fields.mac = post.gw_addr;
-      influx_point.fields.connection = post.connection;
-      influx_point.fields.sensors_seen = post.sensors_seen;
-      influx_point.fields.active_sensors = post.active_sensors;
-      influx_point.fields.inactive_sensors = post.inactive_sensors;
-      influx_samples.push(influx_point);
-      if(post.uptime < 1800 && post.reset_reason)
-      {
-        influx_point = {};
-        influx_point.fields = {};
-        influx_point.tags = {};
-        influx_point.measurement = gateway_status_reset;
-        influx_point.tags.gateway_id = post.gw_addr;
-        influx_point.tags.connection = post.connection;
-        influx_point.tags.esp_version = post.esp_fw;
-        influx_point.tags.nrf_version = post.nrf_fw;
-        influx_point.tags.reset_reason = post.reset_reason;
-        influx_point.fields.esp_fw = post.esp_fw;
-        influx_point.fields.nrf_fw = post.nrf_fw;
-        influx_point.fields.uptime = post.uptime;
-        influx_point.fields.mac = post.gw_addr;
-        influx_point.fields.connection = post.connection;
-        influx_point.fields.sensors_seen = post.sensors_seen;
-        influx_point.fields.active_sensors = post.active_sensors;
-        influx_point.fields.inactive_sensors = post.inactive_sensors;
-        influx_point.fields.reset_reason = post.reset_reason;
-        influx_point.fields.reset_count = post.reset_count;
-        influx_point.fields.reset_info = post.reset_info;
-        influx_samples.push(influx_point);
-      }
-      gateway_db.writePoints(influx_samples).catch(err => {
-      console.error(`Error saving data to InfluxDB! ${err.stack}`);
-    });
-    res.send('ok');
+  const post = req.body;
+  const influx_samples = [];
+  let influx_point = {};
+  const device_address = post.gw_addr;
+  const esp_fw = post.esp_fw;
+  const uptime = post.uptime;
+  influx_point.fields = {};
+  influx_point.tags = {};
+  influx_point.measurement = gateway_status_measurement;
+  influx_point.tags.gateway_id = device_address;
+  influx_point.tags.connection = post.connection;
+  influx_point.tags.esp_version = esp_fw;
+  influx_point.tags.nrf_version = post.nrf_fw;
+  influx_point.fields.esp_fw = esp_fw;
+  influx_point.fields.nrf_fw = post.nrf_fw;
+  influx_point.fields.uptime = uptime;
+  influx_point.fields.mac = device_address;
+  influx_point.fields.connection = post.connection;
+  influx_point.fields.sensors_seen = post.sensors_seen;
+  influx_point.fields.active_sensors = post.active_sensors;
+  influx_point.fields.inactive_sensors = post.inactive_sensors;
+  influx_samples.push(influx_point);
+  if (uptime < 1800 && post.reset_reason) {
+    influx_point = {};
+    influx_point.fields = {};
+    influx_point.tags = {};
+    influx_point.measurement = gateway_status_reset;
+    influx_point.tags.gateway_id = device_address;
+    influx_point.tags.connection = post.connection;
+    influx_point.tags.esp_version = esp_fw;
+    influx_point.tags.nrf_version = post.nrf_fw;
+    influx_point.tags.reset_reason = post.reset_reason;
+    influx_point.fields.esp_fw = esp_fw;
+    influx_point.fields.nrf_fw = post.nrf_fw;
+    influx_point.fields.uptime = uptime;
+    influx_point.fields.mac = device_address;
+    influx_point.fields.connection = post.connection;
+    influx_point.fields.sensors_seen = post.sensors_seen;
+    influx_point.fields.active_sensors = post.active_sensors;
+    influx_point.fields.inactive_sensors = post.inactive_sensors;
+    influx_point.fields.reset_reason = post.reset_reason;
+    influx_point.fields.reset_count = post.reset_count;
+    influx_point.fields.reset_info = post.reset_info;
+    influx_samples.push(influx_point);
+  }
+  if (post.hasOwnProperty('tasks')) {
+    const tasks = post.TASKS;
+
+    for (const task_name in tasks) {
+      const min_free_stack_size = tasks[task_name].MIN_FREE_STACK_SIZE;
+
+      const task_statistics_point = {
+        measurement: 'task_statistics',
+        tags: {
+          device_address,
+          esp_fw
+        },
+        fields: {
+          uptime,
+          task_name,
+          min_free_stack_size
+        }
+      };
+
+      influx_samples.push(task_statistics_point);
+    }
+  }
+  gateway_db.writePoints(influx_samples).catch(err => {
+    console.error(`Error saving data to InfluxDB! ${err.stack}`);
+  });
+  res.send('ok');
 });
 
 app.post('/gateway', jsonParser, async function (req, res) {
