@@ -100,7 +100,8 @@ const task_statistics_schema = [
     },
     tags: [
       'device_address',
-      'esp_fw'
+      'esp_fw',
+      'task_name'
     ]
   }
 ];
@@ -343,7 +344,7 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
     influx_samples.push(influx_point);
   }
   if (post.hasOwnProperty('tasks')) {
-    const tasks = post.TASKS;
+    const tasks = post.tasks;
 
     for (const task_name in tasks) {
       const min_free_stack_size = tasks[task_name].MIN_FREE_STACK_SIZE;
@@ -352,7 +353,8 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
         measurement: 'task_statistics',
         tags: {
           device_address,
-          esp_fw
+          esp_fw,
+          task_name
         },
         fields: {
           uptime,
