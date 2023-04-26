@@ -346,8 +346,9 @@ app.post('/gw_statistics', jsonParser, async function (req, res) {
   if (post.hasOwnProperty('tasks')) {
     const tasks = post.tasks;
 
-    for (const task_name in tasks) {
-      const min_free_stack_size = tasks[task_name].MIN_FREE_STACK_SIZE;
+    for (const task in tasks) {
+      const min_free_stack_size = tasks[task].MIN_FREE_STACK_SIZE;
+      const task_name = tasks[task].TASK_NAME;
 
       const task_statistics_point = {
         measurement: 'task_statistics',
